@@ -5,6 +5,88 @@ import ora from "ora";
 import path from "path";
 
 export class FFmpegUtil {
+  static async convertToHLS(
+    inputPath: string,
+    outputDir: string,
+    selectedResolutions: string[],
+    bitrates: Record<string, string>
+  ): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      if (!fs.existsSync(inputPath)) {
+        console.log(chalk.red("❌ Input video file does not exist."));
+        return reject(new Error("Input video file does not exist."));
+      }
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+
+      console.log(
+        chalk.blue(`🔄 Converting ${path.basename(inputPath)} to HLS...`)
+      );
+
+      try {
+        // Process each resolution sequentially
+        for (const resolution of selectedResolutions) {
+          const outputVariantPath = path.join(outputDir, `${resolution}.m3u8`);
+          await new Promise((res, rej) => {
+            const spinner = ora(`⏳ Converting ${resolution}...`).start();
+            ffmpeg(inputPath)
+              .outputOptions([
+                "-c:v libx264",
+                "-preset fast",
+                "-crf 22",
+                "-sc_threshold 0",
+                "-g 48",
+                "-keyint_min 48",
+                "-hls_time 4",
+                "-hls_list_size 0",
+                "-f hls",
+                `-s ${this.getResolution(resolution)}`,
+                `-b:v ${bitrates[resolution]}`,
+              ])
+              .on("progress", (progress) => {
+                if (progress.percent) {
+                  spinner.text = `⏳ ${resolution}: ${progress.percent.toFixed(
+                    2
+                  )}% completed...`;
+                }
+              })
+              .on("end", () => {
+                spinner.succeed(
+                  chalk.green(
+                    `✅ ${resolution} conversion finished: ${outputVariantPath}`
+                  )
+                );
+                res(null);
+              })
+              .on("error", (err) => {
+                spinner.fail(
+                  chalk.red(`❌ FFmpeg Error on ${resolution}: ${err.message}`)
+                );
+                rej(err);
+              })
+              .save(outputVariantPath);
+          });
+        }
+
+        // Create master.m3u8 playlist after all resolutions are processed
+        let masterPlaylist = "#EXTM3U\n";
+        for (const resolution of selectedResolutions) {
+          const actualResolution = this.getResolution(resolution);
+          const bitrateStr = bitrates[resolution];
+          const bandwidth = this.parseBitrate(bitrateStr);
+          masterPlaylist += `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${actualResolution}\n${resolution}.m3u8\n`;
+        }
+        const masterPath = path.join(outputDir, "master.m3u8");
+        fs.writeFileSync(masterPath, masterPlaylist);
+        console.log(chalk.green(`✅ Master playlist created: ${masterPath}`));
+        resolve(masterPath);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   static async convertVideo(
     inputPath: string,
     outputPath: string,
@@ -120,5 +202,17 @@ export class FFmpegUtil {
       "1080p": "1920x1080",
     };
     return resolutions[resolution] || "1280x720";
+  }
+
+  private static parseBitrate(bitrate: string): number {
+    // Assumes bitrate format like "800k" or "1.5m"
+    const lower = bitrate.toLowerCase();
+    if (lower.endsWith("k")) {
+      return Math.round(parseFloat(bitrate) * 1000);
+    } else if (lower.endsWith("m")) {
+      return Math.round(parseFloat(bitrate) * 1000000);
+    } else {
+      return parseInt(bitrate);
+    }
   }
 }

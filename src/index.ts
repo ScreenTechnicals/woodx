@@ -2,6 +2,7 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
 import path from "path";
+import { AdaptiveHLSVideoConverter } from "./services/adaptive-hls-converter.service";
 import { ErrorService } from "./services/error.service";
 import { StreamingService } from "./services/streaming.service";
 import { VideoConverter } from "./services/video-converter.service";
@@ -20,6 +21,7 @@ async function main() {
           "Convert a video",
           "Merge multiple videos",
           "Host M3U8 stream",
+          "Adaptive HLS Conversion",
         ],
       },
     ]);
@@ -46,6 +48,9 @@ async function main() {
       const streamingService = new StreamingService(VIDEO_DIR);
       streamingService.setupRoutes();
       streamingService.startServer();
+    } else if (task === "Adaptive HLS Conversion") {
+      // The AdaptiveHLSVideoConverter service now handles all prompts internally.
+      await AdaptiveHLSVideoConverter.convertToHLS();
     }
   } catch (error) {
     ErrorService.handleError(
