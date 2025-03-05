@@ -46,20 +46,33 @@ export class VideoMerger {
         },
       ]);
 
-      const outputPath = path.join("outputs", `${output}.${format}`);
-      const videoPaths = selectedVideos.map((file: any) =>
+      // Define output directory structure
+      const outputFolder = path.join("outputs", output);
+      if (!fs.existsSync(outputFolder)) {
+        fs.mkdirSync(outputFolder, { recursive: true });
+      }
+
+      const outputPath = path.join(outputFolder, `${output}.${format}`);
+      const videoPaths = selectedVideos.map((file: string) =>
         path.join(this.videoDir, file)
       );
 
+      console.log(chalk.yellow("🔄 Merging videos..."));
       await FFmpegUtil.mergeVideos(videoPaths, outputPath);
+      console.log(chalk.green(`✅ Merge complete! Saved at: ${outputPath}`));
     } catch (error) {
       ErrorService.handleError(error, "Failed to merge videos.");
     }
   }
 
   private getVideoFiles(): string[] {
-    return fs
-      .readdirSync(this.videoDir)
-      .filter((file) => file.match(/\.(mp4|mkv|avi|mov|webm|flv)$/));
+    try {
+      return fs
+        .readdirSync(this.videoDir)
+        .filter((file) => file.match(/\.(mp4|mkv|avi|mov|webm|flv)$/));
+    } catch (error) {
+      console.log(chalk.red("❌ Failed to read directory."));
+      return [];
+    }
   }
 }

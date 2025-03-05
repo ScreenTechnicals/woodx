@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
-import ora from "ora"; // Import ora for spinner
+import ora from "ora";
 import path from "path";
 
 export class FFmpegUtil {
@@ -25,7 +25,7 @@ export class FFmpegUtil {
 
       const ffmpegCommand = ffmpeg(inputPath)
         .on("codecData", (data) => {
-          totalDuration = parseFloat(data.duration); // Total video duration in seconds
+          totalDuration = parseFloat(data.duration);
         })
         .on("progress", (progress) => {
           if (progress.percent) {
@@ -33,7 +33,7 @@ export class FFmpegUtil {
           }
         })
         .on("end", () => {
-          spinner.succeed(chalk.green(`Conversion finished: ${outputPath}`));
+          spinner.succeed(chalk.green(`✅ Conversion finished: ${outputPath}`));
           resolve(outputPath);
         })
         .on("error", (err) => {
@@ -65,6 +65,51 @@ export class FFmpegUtil {
       }
 
       ffmpegCommand.save(outputPath);
+    });
+  }
+
+  static async mergeVideos(videoPaths: string[], outputPath: string) {
+    return new Promise((resolve, reject) => {
+      if (videoPaths.length < 2) {
+        console.log(
+          chalk.red("❌ At least 2 video files are required to merge.")
+        );
+        return reject(new Error("At least 2 video files are required."));
+      }
+
+      console.log(chalk.blue("🔄 Merging videos..."));
+
+      const spinner = ora("⏳ Initializing merge...").start();
+
+      const tempFile = path.join(path.dirname(outputPath), "input.txt");
+
+      // Create input list file
+      try {
+        const fileContent = videoPaths
+          .map((file) => `file '${path.resolve(file)}'`)
+          .join("\n");
+        fs.writeFileSync(tempFile, fileContent);
+      } catch (error) {
+        spinner.fail(chalk.red("❌ Failed to create input file."));
+        return reject(error);
+      }
+
+      ffmpeg()
+        .input(tempFile)
+        .inputOptions(["-f concat", "-safe 0"])
+        .outputOptions(["-c copy"])
+        .save(outputPath)
+        .on("end", () => {
+          spinner.succeed(
+            chalk.green(`✅ Merge complete! Saved at: ${outputPath}`)
+          );
+          fs.unlinkSync(tempFile); // Clean up temporary file
+          resolve(outputPath);
+        })
+        .on("error", (err) => {
+          spinner.fail(chalk.red("❌ FFmpeg Error: " + err.message));
+          reject(err);
+        });
     });
   }
 

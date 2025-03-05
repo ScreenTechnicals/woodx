@@ -60,17 +60,17 @@ export class VideoConverter {
         return;
       }
 
-      const outputFolder = path.join(
-        "outputs",
-        answers.output || path.basename(input, path.extname(input))
-      );
+      const baseName =
+        answers.output || path.basename(input, path.extname(input));
+
+      const outputFolder = path.join("outputs", baseName, answers.resolution);
       if (!fs.existsSync(outputFolder)) {
         fs.mkdirSync(outputFolder, { recursive: true });
       }
 
       const outputPath = path.join(
         outputFolder,
-        `${answers.output}.${answers.format}`
+        `${baseName}.${answers.format}`
       );
 
       console.log(chalk.yellow("🔄 Converting..."));
