@@ -6,7 +6,6 @@ import { $ } from "zx";
 
 export class StreamingService {
   private videoBaseDir: string;
-
   private app: Elysia;
   private port: number;
 
@@ -37,7 +36,6 @@ export class StreamingService {
           const m3u8File = files.find((file) => file.endsWith(".m3u8"));
           const tsFiles = files.filter((file) => file.endsWith(".ts"));
 
-          // Store the .m3u8 file under its resolution
           if (m3u8File) {
             allVideos.m3u8_files[resolution] = {
               filename: m3u8File,
@@ -45,7 +43,6 @@ export class StreamingService {
             };
           }
 
-          // Store TS files under their respective resolutions
           if (tsFiles.length > 0) {
             allVideos.ts_segments[resolution] = tsFiles.map((file) => ({
               filename: file,
@@ -62,11 +59,32 @@ export class StreamingService {
       }
     });
 
+    this.app.get("/videos/:resolution/:filename", ({ params }) => {
+      const { resolution, filename } = params;
+      const filePath = path.join(this.videoBaseDir, resolution, filename);
+      if (!fs.existsSync(filePath)) {
+        return { error: "File not found" };
+      }
+      return new Response(fs.readFileSync(filePath), {
+        headers: { "Content-Type": "application/vnd.apple.mpegurl" },
+      });
+    });
+
+    this.app.get("/segments/:resolution/:filename", ({ params }) => {
+      const { resolution, filename } = params;
+      const filePath = path.join(this.videoBaseDir, resolution, filename);
+      if (!fs.existsSync(filePath)) {
+        return { error: "File not found" };
+      }
+      return new Response(fs.readFileSync(filePath), {
+        headers: { "Content-Type": "video/mp2t" },
+      });
+    });
+
     return this.app;
   }
 
   public async startServer() {
-    // Prompt for port using inquirer
     const { port } = await inquirer.prompt([
       {
         type: "input",
@@ -82,13 +100,6 @@ export class StreamingService {
       console.log(`🚀 Server is running at ${url}`);
 
       try {
-        if (process.platform === "win32") {
-          await $`start ${url}`;
-        } else if (process.platform === "darwin") {
-          await $`open ${url}`;
-        } else {
-          await $`xdg-open ${url}`;
-        }
         if (process.platform === "win32") {
           await $`start ${url}`;
         } else if (process.platform === "darwin") {
