@@ -2,6 +2,7 @@ import chalk from "chalk";
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
+import { defaultVideoConfigs } from "../common/constants.common";
 import { CLIHelper } from "../helpers/cli.helper";
 import { FFmpegUtil } from "../utils/ffmpeg-cli.util";
 import { ErrorService } from "./error.service";
@@ -37,15 +38,15 @@ export class VideoConverter {
           type: "list",
           name: "format",
           message: "📀 Choose output format:",
-          choices: ["mp4", "webm", "avi", "mov", "m3u8"],
-          default: "mp4",
+          choices: defaultVideoConfigs.videoFormats,
+          default: defaultVideoConfigs.format,
         },
         {
           type: "list",
           name: "resolution",
           message: "🖥️ Select resolution:",
-          choices: ["480p", "720p", "1080p"],
-          default: "720p",
+          choices: defaultVideoConfigs.videoResolutions,
+          default: defaultVideoConfigs.resolution,
         },
         {
           type: "input",
@@ -63,7 +64,11 @@ export class VideoConverter {
       const baseName =
         answers.output || path.basename(input, path.extname(input));
 
-      const outputFolder = path.join("outputs", baseName, answers.resolution);
+      const outputFolder = path.join(
+        defaultVideoConfigs.output,
+        baseName,
+        answers.resolution
+      );
       if (!fs.existsSync(outputFolder)) {
         fs.mkdirSync(outputFolder, { recursive: true });
       }

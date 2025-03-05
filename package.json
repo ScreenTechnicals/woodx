@@ -13,7 +13,11 @@
     "start": "bun run build && bun run build-windows && ./dist/woodx",
     "dev": "bun run ./src/index.ts",
     "build": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile ./dist/woodx ./src/index.ts",
-    "build-windows": "bun build --compile --target=bun-windows-x64 ./src/index.ts --outfile ./dist/windows/woodx"
+    "build-windows": "bun build --compile --target=bun-windows-x64 ./src/index.ts --outfile ./dist/windows/woodx",
+    "caddy": "caddy run --config ./CaddyFile",
+    "start-caddy": "brew services start caddy",
+    "restart-caddy": "brew services restart caddy",
+    "serve": "ngrok http --url=optionally-special-possum.ngrok-free.app http://localhost:2019"
   },
   "dependencies": {
     "chalk": "^5.4.1",

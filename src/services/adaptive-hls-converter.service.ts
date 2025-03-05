@@ -2,6 +2,7 @@ import chalk from "chalk";
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
+import { defaultVideoConfigs } from "../common/constants.common";
 import { FFmpegUtil } from "../utils/ffmpeg-cli.util";
 
 export class AdaptiveHLSVideoConverter {
@@ -9,7 +10,6 @@ export class AdaptiveHLSVideoConverter {
     console.log(chalk.blue("🔄 Starting adaptive HLS conversion..."));
 
     try {
-      // Ask user for the directory containing video files
       const { videoDirectory } = await inquirer.prompt([
         {
           type: "input",
@@ -45,8 +45,6 @@ export class AdaptiveHLSVideoConverter {
       ]);
 
       const inputPath = path.join(resolvedDir, selectedVideo);
-
-      // Ask user for output folder name, defaulting to the video file name (without extension)
       const defaultOutputName = path.basename(
         selectedVideo,
         path.extname(selectedVideo)
@@ -59,20 +57,13 @@ export class AdaptiveHLSVideoConverter {
           default: defaultOutputName,
         },
       ]);
-
       const outputDir = path.join(process.cwd(), "outputs", folderName);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
-
-      // Ask user to select resolutions and set bitrates
-      const availableResolutions = ["480p", "720p", "1080p"];
-      const defaultBitrates: Record<string, string> = {
-        "480p": "800k",
-        "720p": "1500k",
-        "1080p": "3000k",
-      };
-
+      const availableResolutions = defaultVideoConfigs.videoResolutions;
+      const defaultBitrates: Record<string, string> =
+        defaultVideoConfigs.videoBitrates;
       const { selectedResolutions } = await inquirer.prompt([
         {
           type: "checkbox",

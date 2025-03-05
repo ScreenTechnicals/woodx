@@ -1,116 +1,51 @@
-import { Elysia } from "elysia";
+import chalk from "chalk";
 import fs from "fs";
-import inquirer from "inquirer";
 import path from "path";
 import { $ } from "zx";
 
 export class StreamingService {
   private videoBaseDir: string;
-  private app: Elysia;
   private port: number;
 
-  constructor(videoBaseDir: string, port = 3000) {
-    this.videoBaseDir = videoBaseDir;
-    this.app = new Elysia();
+  constructor(videoBaseDir: string, port = 9003) {
+    this.videoBaseDir = path.resolve(videoBaseDir);
     this.port = port;
+
+    if (!fs.existsSync(this.videoBaseDir)) {
+      console.error(
+        chalk.red(`❌ Video directory does not exist: ${this.videoBaseDir}`)
+      );
+      process.exit(1);
+    }
   }
 
-  public setupRoutes() {
-    this.app.get("/", () => {
-      try {
-        const allVideos: {
-          m3u8_files: Record<string, { filename: string; url: string }>;
-          ts_segments: Record<string, { filename: string; url: string }[]>;
-        } = {
-          m3u8_files: {},
-          ts_segments: {},
-        };
-
-        const resolutions = fs.readdirSync(this.videoBaseDir);
-
-        resolutions.forEach((resolution) => {
-          const resolutionPath = path.join(this.videoBaseDir, resolution);
-          if (!fs.lstatSync(resolutionPath).isDirectory()) return;
-
-          const files = fs.readdirSync(resolutionPath);
-          const m3u8File = files.find((file) => file.endsWith(".m3u8"));
-          const tsFiles = files.filter((file) => file.endsWith(".ts"));
-
-          if (m3u8File) {
-            allVideos.m3u8_files[resolution] = {
-              filename: m3u8File,
-              url: `/videos/${resolution}/${m3u8File}`,
-            };
-          }
-
-          if (tsFiles.length > 0) {
-            allVideos.ts_segments[resolution] = tsFiles.map((file) => ({
-              filename: file,
-              url: `/segments/${resolution}/${file}`,
-            }));
-          }
-        });
-
-        return { message: "Available video streams", videos: allVideos };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "An unknown error occurred";
-        return { error: "Failed to list files", details: errorMessage };
-      }
-    });
-
-    this.app.get("/videos/:resolution/:filename", ({ params }) => {
-      const { resolution, filename } = params;
-      const filePath = path.join(this.videoBaseDir, resolution, filename);
-      if (!fs.existsSync(filePath)) {
-        return { error: "File not found" };
-      }
-      return new Response(fs.readFileSync(filePath), {
-        headers: { "Content-Type": "application/vnd.apple.mpegurl" },
-      });
-    });
-
-    this.app.get("/segments/:resolution/:filename", ({ params }) => {
-      const { resolution, filename } = params;
-      const filePath = path.join(this.videoBaseDir, resolution, filename);
-      if (!fs.existsSync(filePath)) {
-        return { error: "File not found" };
-      }
-      return new Response(fs.readFileSync(filePath), {
-        headers: { "Content-Type": "video/mp2t" },
-      });
-    });
-
-    return this.app;
+  private async isCaddyInstalled(): Promise<boolean> {
+    try {
+      await $`caddy version`;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   public async startServer() {
-    const { port } = await inquirer.prompt([
-      {
-        type: "input",
-        name: "port",
-        message: "Enter port number (default: 3000):",
-        default: "3000",
-      },
-    ]);
-    this.port = Number(port) || 3000;
+    if (!(await this.isCaddyInstalled())) {
+      console.error(
+        chalk.red("❌ Caddy is not installed. Please install it first.")
+      );
+      process.exit(1);
+    }
 
-    this.app.listen(this.port, async () => {
-      const url = `http://localhost:${this.port}`;
-      console.log(`🚀 Server is running at ${url}`);
+    console.log(
+      chalk.blue(
+        `🚀 Starting Caddy server on port ${this.port}, serving from ${this.videoBaseDir}...`
+      )
+    );
 
-      try {
-        if (process.platform === "win32") {
-          await $`start ${url}`;
-        } else if (process.platform === "darwin") {
-          await $`open ${url}`;
-        } else {
-          await $`xdg-open ${url}`;
-        }
-        console.log("🌍 Opened in browser successfully!");
-      } catch (err) {
-        console.error("❌ Failed to open browser:", (err as Error).message);
-      }
-    });
+    try {
+      await $`caddy file-server --listen :${this.port} --root ${this.videoBaseDir} --browse`;
+    } catch (error) {
+      console.error(chalk.red("❌ Failed to start Caddy server:", error));
+    }
   }
 }
