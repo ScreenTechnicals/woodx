@@ -6,6 +6,7 @@ import { $ } from "zx";
 
 export class StreamingService {
   private videoBaseDir: string;
+
   private app: Elysia;
   private port: number;
 
@@ -19,10 +20,10 @@ export class StreamingService {
     this.app.get("/", () => {
       try {
         const allVideos: {
-          m3u8_files: any[];
-          ts_segments: Record<string, any[]>;
+          m3u8_files: Record<string, { filename: string; url: string }>;
+          ts_segments: Record<string, { filename: string; url: string }[]>;
         } = {
-          m3u8_files: [],
+          m3u8_files: {},
           ts_segments: {},
         };
 
@@ -33,28 +34,24 @@ export class StreamingService {
           if (!fs.lstatSync(resolutionPath).isDirectory()) return;
 
           const files = fs.readdirSync(resolutionPath);
-          const m3u8Files = files.filter((file) => file.endsWith(".m3u8"));
+          const m3u8File = files.find((file) => file.endsWith(".m3u8"));
           const tsFiles = files.filter((file) => file.endsWith(".ts"));
 
-          // Collect all .m3u8 files in a flat array
-          allVideos.m3u8_files.push(
-            ...m3u8Files.map((file) => ({
-              filename: file,
-              url: `/videos/${resolution}/${file}`,
-            }))
-          );
-
-          // Group TS files under resolutions
-          if (!allVideos.ts_segments[resolution]) {
-            allVideos.ts_segments[resolution] = [];
+          // Store the .m3u8 file under its resolution
+          if (m3u8File) {
+            allVideos.m3u8_files[resolution] = {
+              filename: m3u8File,
+              url: `/videos/${resolution}/${m3u8File}`,
+            };
           }
 
-          allVideos.ts_segments[resolution].push(
-            ...tsFiles.map((file) => ({
+          // Store TS files under their respective resolutions
+          if (tsFiles.length > 0) {
+            allVideos.ts_segments[resolution] = tsFiles.map((file) => ({
               filename: file,
               url: `/segments/${resolution}/${file}`,
-            }))
-          );
+            }));
+          }
         });
 
         return { message: "Available video streams", videos: allVideos };
@@ -85,6 +82,13 @@ export class StreamingService {
       console.log(`🚀 Server is running at ${url}`);
 
       try {
+        if (process.platform === "win32") {
+          await $`start ${url}`;
+        } else if (process.platform === "darwin") {
+          await $`open ${url}`;
+        } else {
+          await $`xdg-open ${url}`;
+        }
         if (process.platform === "win32") {
           await $`start ${url}`;
         } else if (process.platform === "darwin") {
