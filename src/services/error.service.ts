@@ -1,7 +1,7 @@
 import chalk from "chalk";
 
 export class ErrorService {
-  static handleError(error: unknown, message: string) {
+  public handleError(error: unknown, message: string) {
     console.error(chalk.red(`❌ ${message}`));
 
     if (error instanceof Error) {
@@ -9,7 +9,5 @@ export class ErrorService {
     } else {
       console.error(chalk.gray(`🔍 Unknown error occurred.`));
     }
-
-    process.exit(1);
   }
 }

@@ -177,3 +177,4 @@ dist
 videos/
 outputs/
 *.mp4
+.qodo/

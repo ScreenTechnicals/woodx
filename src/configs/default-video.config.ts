@@ -1,4 +1,4 @@
-export const defaultVideoConfigs = {
+export const defaultVideoConfig = {
   port: 9003,
   videoResolutions: [
     "144p",

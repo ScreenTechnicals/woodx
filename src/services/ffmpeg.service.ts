@@ -4,8 +4,8 @@ import fs from "fs";
 import ora from "ora";
 import path from "path";
 
-export class FFmpegUtil {
-  static async convertToHLS(
+export class FFmpegService {
+  public async convertToHLS(
     inputPath: string,
     outputDir: string,
     selectedResolutions: string[],
@@ -87,7 +87,7 @@ export class FFmpegUtil {
     });
   }
 
-  static async convertVideo(
+  public async convertVideo(
     inputPath: string,
     outputPath: string,
     options: any
@@ -150,7 +150,7 @@ export class FFmpegUtil {
     });
   }
 
-  static async mergeVideos(videoPaths: string[], outputPath: string) {
+  public async mergeVideos(videoPaths: string[], outputPath: string) {
     return new Promise((resolve, reject) => {
       if (videoPaths.length < 2) {
         console.log(
@@ -165,7 +165,6 @@ export class FFmpegUtil {
 
       const tempFile = path.join(path.dirname(outputPath), "input.txt");
 
-      // Create input list file
       try {
         const fileContent = videoPaths
           .map((file) => `file '${path.resolve(file)}'`)
@@ -195,7 +194,7 @@ export class FFmpegUtil {
     });
   }
 
-  private static getResolution(resolution: string): string {
+  private getResolution(resolution: string): string {
     const resolutions: { [key: string]: string } = {
       "480p": "640x480",
       "720p": "1280x720",
@@ -204,7 +203,7 @@ export class FFmpegUtil {
     return resolutions[resolution] || "1280x720";
   }
 
-  private static parseBitrate(bitrate: string): number {
+  private parseBitrate(bitrate: string): number {
     // Assumes bitrate format like "800k" or "1.5m"
     const lower = bitrate.toLowerCase();
     if (lower.endsWith("k")) {

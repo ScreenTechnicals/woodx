@@ -1,23 +1,19 @@
-import fs from "fs";
-import inquirer from "inquirer";
+import chalk from "chalk";
+import figlet from "figlet";
 
-export class CLIHelper {
-  static async askForVideoDir(): Promise<string> {
-    const { videoDir } = await inquirer.prompt([
-      {
-        type: "input",
-        name: "videoDir",
-        message: "📁 Enter the directory where videos are stored:",
-        default: process.cwd(),
-        validate: (dir) => {
-          if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
-            return "❌ Invalid directory!";
-          }
-          return true;
-        },
-      },
-    ]);
+export const getUniqueName = (name: string) => {
+  return `${name}-${new Date().getTime()}`;
+};
 
-    return videoDir;
-  }
-}
+export const showBanner = () => {
+  console.log(
+    "\n",
+    chalk.cyan(
+      figlet.textSync("woodx", {
+        font: "ANSI Shadow",
+        horizontalLayout: "full",
+        verticalLayout: "default",
+      })
+    )
+  );
+};

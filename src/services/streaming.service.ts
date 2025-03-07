@@ -1,24 +1,8 @@
 import chalk from "chalk";
-import fs from "fs";
-import path from "path";
+import open from "open";
 import { $ } from "zx";
 
 export class StreamingService {
-  private videoBaseDir: string;
-  private port: number;
-
-  constructor(videoBaseDir: string, port = 9003) {
-    this.videoBaseDir = path.resolve(videoBaseDir);
-    this.port = port;
-
-    if (!fs.existsSync(this.videoBaseDir)) {
-      console.error(
-        chalk.red(`❌ Video directory does not exist: ${this.videoBaseDir}`)
-      );
-      process.exit(1);
-    }
-  }
-
   private async isCaddyInstalled(): Promise<boolean> {
     try {
       await $`caddy version`;
@@ -28,24 +12,28 @@ export class StreamingService {
     }
   }
 
-  public async startServer() {
+  public async startServer(videoBaseDir: string, port = 9003) {
     if (!(await this.isCaddyInstalled())) {
-      console.error(
-        chalk.red("❌ Caddy is not installed. Please install it first.")
-      );
-      process.exit(1);
+      throw new Error("❌ Caddy is not installed. Please install it first.");
     }
 
     console.log(
       chalk.blue(
-        `🚀 Starting Caddy server on port ${this.port}, serving from ${this.videoBaseDir}...`
+        `🚀 Starting Caddy server on port ${port}, serving from ${videoBaseDir}...`
       )
     );
 
     try {
-      await $`caddy file-server --listen :${this.port} --root ${this.videoBaseDir} --browse`;
+      const localServer = `http://localhost:${port}`;
+
+      console.log(chalk.green(`Starting at ${localServer} 🚀`));
+
+      $`caddy file-server --listen :${port} --root ${videoBaseDir} --browse`;
+
+      open(`${localServer}`);
     } catch (error) {
-      console.error(chalk.red("❌ Failed to start Caddy server:", error));
+      if (error instanceof Error) throw new Error(error.message);
+      else throw new Error("Streaming Failed!");
     }
   }
 }
