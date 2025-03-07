@@ -1,10 +1,3 @@
-export const tasks = [
-  "Convert a video",
-  "Merge multiple videos",
-  "Host M3U8 stream",
-  "Adaptive HLS Conversion",
-] as const;
-
 import chalk from "chalk";
 import { showBanner } from "../helpers/cli.helper";
 import { ErrorService } from "../services/error.service";
