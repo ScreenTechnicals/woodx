@@ -1,7 +1,8 @@
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
-import { tasks } from "../common/constants/tasks.constant";
+import { s3RegionsConst } from "../common/constants/s3-regions.constant";
+import { tasksConst } from "../common/constants/tasks.constant";
 import type { AWSConfig } from "../common/types/aws.type";
 import { defaultVideoConfig } from "../configs/default-video.config";
 
@@ -15,7 +16,7 @@ export class UserInputService {
         type: "list",
         name: "task",
         message: "📌 What do you want to do?",
-        choices: tasks,
+        choices: tasksConst,
       },
     ]);
 
@@ -230,7 +231,7 @@ export class UserInputService {
         type: 'list',
         name: 'region' as const,
         message: 'Select AWS Region:',
-        choices: ['us-east-1', 'us-west-2', 'eu-central-1'],
+        choices: s3RegionsConst,
         default: "us-east-1"
       },
       {
