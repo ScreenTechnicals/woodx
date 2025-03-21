@@ -178,3 +178,4 @@ videos/
 outputs/
 *.mp4
 .qodo/
+.qodo

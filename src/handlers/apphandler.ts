@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { showBanner } from "../helpers/cli.helper";
+import { AwsS3Service } from "../services/asw-s3.service";
 import { ErrorService } from "../services/error.service";
 import { FFmpegService } from "../services/ffmpeg.service";
 import { StreamingService } from "../services/streaming.service";
@@ -13,6 +14,7 @@ export class AppHandler {
   private readonly services: {
     userInputService: UserInputService;
     streamingService: StreamingService;
+    awsS3Service: AwsS3Service;
     ffmpegService: FFmpegService;
     errorService: ErrorService;
   };
@@ -28,6 +30,7 @@ export class AppHandler {
     this.services = {
       userInputService: new UserInputService(),
       streamingService: new StreamingService(),
+      awsS3Service: new AwsS3Service(),
       ffmpegService: new FFmpegService(),
       errorService: new ErrorService(),
     };
@@ -36,6 +39,7 @@ export class AppHandler {
       adaptiveHLSVideoConversionHandler: new AdaptiveHLSVideoConversionHandler(
         this.services.userInputService,
         this.services.ffmpegService,
+        this.services.awsS3Service,
         this.services.errorService
       ),
       videoConversionHandler: new VideoConversionHandler(

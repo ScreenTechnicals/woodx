@@ -2,7 +2,9 @@ import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
 import { tasks } from "../common/constants/tasks.constant";
+import type { AWSConfig } from "../common/types/aws.type";
 import { defaultVideoConfig } from "../configs/default-video.config";
+
 
 export class UserInputService {
   // private static instance: UserInputService;
@@ -195,7 +197,7 @@ export class UserInputService {
   public async askBitrate(resolution: string): Promise<string> {
     const bitrateDefault =
       defaultVideoConfig.videoBitrates[
-        resolution as keyof typeof defaultVideoConfig.videoBitrates
+      resolution as keyof typeof defaultVideoConfig.videoBitrates
       ] || "3500k"; // Fallback default
 
     const { bitrate } = await inquirer.prompt([
@@ -208,5 +210,51 @@ export class UserInputService {
     ]);
 
     return bitrate;
+  }
+
+  public async askForMissingS3Configs(): Promise<AWSConfig> {
+    const answers = await inquirer.prompt<AWSConfig>([
+      {
+        type: 'input',
+        name: 'accessKeyId' as const,
+        message: 'Enter your AWS Access Key ID:',
+        required: true
+      },
+      {
+        type: 'password',
+        name: 'secretAccessKey' as const,
+        message: 'Enter your AWS Secret Access Key:',
+        validate: (password) => !!password.length
+      },
+      {
+        type: 'list',
+        name: 'region' as const,
+        message: 'Select AWS Region:',
+        choices: ['us-east-1', 'us-west-2', 'eu-central-1'],
+        default: "us-east-1"
+      },
+      {
+        type: 'input',
+        name: 'bucketName' as const,
+        message: 'Enter Bucket Name:',
+        required: true
+      },
+    ]);
+
+    return answers
+  }
+
+  public async askForServiceSpace() {
+    const { serviceSpace } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "serviceSpace",
+        message: "🖥️ Select output space:",
+        choices: ['local', 'aws s3 bucket'],
+        default: 'local',
+      },
+    ]);
+
+    return serviceSpace;
   }
 }
