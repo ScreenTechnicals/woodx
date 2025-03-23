@@ -179,4 +179,3 @@ outputs/
 *.mp4
 .qodo/
 .qodo
-s3.config.yml
