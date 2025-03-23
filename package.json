@@ -7,7 +7,8 @@
     "@types/fluent-ffmpeg": "^2.1.27"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@types/figlet": "^1.7.0"
   },
   "scripts": {
     "start": "./dist/linux/woodx",
@@ -24,10 +25,8 @@
     "serve": "ngrok http --url=optionally-special-possum.ngrok-free.app http://localhost:2019"
   },
   "dependencies": {
-    "@types/figlet": "^1.7.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
-    "elysia": "^1.2.24",
     "figlet": "^1.8.0",
     "fluent-ffmpeg": "^2.1.3",
     "fs": "^0.0.1-security",
