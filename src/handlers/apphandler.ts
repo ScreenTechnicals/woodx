@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { showBanner } from "../helpers/cli.helper";
-import { AwsS3Service } from "../services/asw-s3.service";
+import { AwsS3Service } from "../services/aws-s3.service";
 import { ErrorService } from "../services/error.service";
 import { FFmpegService } from "../services/ffmpeg.service";
 import { StreamingService } from "../services/streaming.service";

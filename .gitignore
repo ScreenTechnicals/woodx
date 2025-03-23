@@ -173,9 +173,11 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-
+*.ts
+*.m3u8
 videos/
 outputs/
 *.mp4
 .qodo/
 .qodo
+s3.config.yml

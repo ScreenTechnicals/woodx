@@ -4,11 +4,12 @@ import path from "path";
 import { s3RegionsConst } from "../common/constants/s3-regions.constant";
 import { tasksConst } from "../common/constants/tasks.constant";
 import type { AWSConfig } from "../common/types/aws.type";
+import type { Resolution } from "../common/types/video.type";
 import { defaultVideoConfig } from "../configs/default-video.config";
 
 
 export class UserInputService {
-  // private static instance: UserInputService;
+  private availableResolutions = Object.keys(defaultVideoConfig.videoResolutions) as Resolution[]
 
   public async askForTask(): Promise<string> {
     const { task } = await inquirer.prompt([
@@ -69,14 +70,13 @@ export class UserInputService {
     return selectedVideo;
   }
 
-  public async askForMulipleResolutions(): Promise<string[]> {
-    const availableResolutions = defaultVideoConfig.videoResolutions;
+  public async askForMulipleResolutions(): Promise<Resolution[]> {
     const { selectedResolutions } = await inquirer.prompt([
       {
         type: "checkbox",
         name: "selectedResolutions",
         message: "Select resolutions for conversion:",
-        choices: availableResolutions,
+        choices: this.availableResolutions,
       },
     ]);
 
@@ -89,7 +89,7 @@ export class UserInputService {
         type: "list",
         name: "resolution",
         message: "🖥️ Select resolution:",
-        choices: defaultVideoConfig.videoResolutions,
+        choices: this.availableResolutions,
         default: defaultVideoConfig.resolution,
       },
     ]);
