@@ -173,7 +173,6 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-*.ts
 *.m3u8
 videos/
 outputs/
