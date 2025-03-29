@@ -57,17 +57,18 @@ export class UserInputService {
     return path.resolve(videoDirectory.trim());
   }
 
-  public async askForVideoSelection(videoFiles: string[]): Promise<string> {
-    const { selectedVideo } = await inquirer.prompt([
+  public async askForVideoSelection(videoFiles: string[]): Promise<string[]> {
+    const { selectedVideos } = await inquirer.prompt([
       {
-        type: "list",
-        name: "selectedVideo",
-        message: "Select a video file to convert:",
+        type: "checkbox",
+        name: "selectedVideos",
+        message: "Select video files to convert:",
         choices: videoFiles,
+        validate: (input) => input.length > 0 ? true : "You must select at least one video.",
       },
     ]);
 
-    return selectedVideo;
+    return selectedVideos;
   }
 
   public async askForMulipleResolutions(): Promise<Resolution[]> {
@@ -236,7 +237,7 @@ export class UserInputService {
       },
       {
         type: 'input',
-        name: 'bucketName' as const,
+        name: 'outputBucketName' as const,
         message: 'Enter Bucket Name:',
         required: true
       },

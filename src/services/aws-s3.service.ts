@@ -16,7 +16,7 @@ export class AwsS3Service {
     /** Initialize the S3 client and ensure the bucket exists */
     public async setupS3(config: AWSConfig): Promise<void> {
         const missingFields = [];
-        if (!config.bucketName) missingFields.push("bucketName");
+        if (!config.outputBucketName) missingFields.push("bucketName");
         if (!config.region) missingFields.push("region");
         if (!config.accessKeyId) missingFields.push("accessKeyId");
         if (!config.secretAccessKey) missingFields.push("secretAccessKey");
@@ -37,18 +37,18 @@ export class AwsS3Service {
 
             const listBucketsResponse = await this.s3.send(new ListBucketsCommand({}));
             const bucketExists = listBucketsResponse.Buckets?.some(
-                (bucket) => bucket.Name === config.bucketName
+                (bucket) => bucket.Name === config.outputBucketName
             );
 
             if (bucketExists) {
-                console.log(`✅ Bucket "${config.bucketName}" already exists.`);
+                console.log(`✅ Bucket "${config.outputBucketName}" already exists.`);
             } else {
                 await this.s3.send(
                     new CreateBucketCommand({
-                        Bucket: config.bucketName,
+                        Bucket: config.outputBucketName,
                     })
                 );
-                console.log(`🚀 Bucket "${config.bucketName}" created successfully.`);
+                console.log(`🚀 Bucket "${config.outputBucketName}" created successfully.`);
             }
         } catch (error) {
             const err = error as Error;
