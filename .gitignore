@@ -173,8 +173,9 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
-
+*.m3u8
 videos/
 outputs/
 *.mp4
 .qodo/
+.qodo

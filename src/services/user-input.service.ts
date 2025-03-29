@@ -1,11 +1,15 @@
 import fs from "fs";
 import inquirer from "inquirer";
 import path from "path";
-import { tasks } from "../common/constants/tasks.constant";
+import { s3RegionsConst } from "../common/constants/s3-regions.constant";
+import { tasksConst } from "../common/constants/tasks.constant";
+import type { AWSConfig } from "../common/types/aws.type";
+import type { Resolution } from "../common/types/video.type";
 import { defaultVideoConfig } from "../configs/default-video.config";
 
+
 export class UserInputService {
-  // private static instance: UserInputService;
+  private availableResolutions = Object.keys(defaultVideoConfig.videoResolutions) as Resolution[]
 
   public async askForTask(): Promise<string> {
     const { task } = await inquirer.prompt([
@@ -13,7 +17,7 @@ export class UserInputService {
         type: "list",
         name: "task",
         message: "📌 What do you want to do?",
-        choices: tasks,
+        choices: tasksConst,
       },
     ]);
 
@@ -53,27 +57,27 @@ export class UserInputService {
     return path.resolve(videoDirectory.trim());
   }
 
-  public async askForVideoSelection(videoFiles: string[]): Promise<string> {
-    const { selectedVideo } = await inquirer.prompt([
+  public async askForVideoSelection(videoFiles: string[]): Promise<string[]> {
+    const { selectedVideos } = await inquirer.prompt([
       {
-        type: "list",
-        name: "selectedVideo",
-        message: "Select a video file to convert:",
+        type: "checkbox",
+        name: "selectedVideos",
+        message: "Select video files to convert:",
         choices: videoFiles,
+        validate: (input) => input.length > 0 ? true : "You must select at least one video.",
       },
     ]);
 
-    return selectedVideo;
+    return selectedVideos;
   }
 
-  public async askForMulipleResolutions(): Promise<string[]> {
-    const availableResolutions = defaultVideoConfig.videoResolutions;
+  public async askForMulipleResolutions(): Promise<Resolution[]> {
     const { selectedResolutions } = await inquirer.prompt([
       {
         type: "checkbox",
         name: "selectedResolutions",
         message: "Select resolutions for conversion:",
-        choices: availableResolutions,
+        choices: this.availableResolutions,
       },
     ]);
 
@@ -86,7 +90,7 @@ export class UserInputService {
         type: "list",
         name: "resolution",
         message: "🖥️ Select resolution:",
-        choices: defaultVideoConfig.videoResolutions,
+        choices: this.availableResolutions,
         default: defaultVideoConfig.resolution,
       },
     ]);
@@ -195,7 +199,7 @@ export class UserInputService {
   public async askBitrate(resolution: string): Promise<string> {
     const bitrateDefault =
       defaultVideoConfig.videoBitrates[
-        resolution as keyof typeof defaultVideoConfig.videoBitrates
+      resolution as keyof typeof defaultVideoConfig.videoBitrates
       ] || "3500k"; // Fallback default
 
     const { bitrate } = await inquirer.prompt([
@@ -208,5 +212,51 @@ export class UserInputService {
     ]);
 
     return bitrate;
+  }
+
+  public async askForMissingS3Configs(): Promise<AWSConfig> {
+    const answers = await inquirer.prompt<AWSConfig>([
+      {
+        type: 'input',
+        name: 'accessKeyId' as const,
+        message: 'Enter your AWS Access Key ID:',
+        required: true
+      },
+      {
+        type: 'password',
+        name: 'secretAccessKey' as const,
+        message: 'Enter your AWS Secret Access Key:',
+        validate: (password) => !!password.length
+      },
+      {
+        type: 'list',
+        name: 'region' as const,
+        message: 'Select AWS Region:',
+        choices: s3RegionsConst,
+        default: "us-east-1"
+      },
+      {
+        type: 'input',
+        name: 'outputBucketName' as const,
+        message: 'Enter Bucket Name:',
+        required: true
+      },
+    ]);
+
+    return answers
+  }
+
+  public async askForServiceSpace() {
+    const { serviceSpace } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "serviceSpace",
+        message: "🖥️ Select output space:",
+        choices: ['local', 'aws s3 bucket'],
+        default: 'local',
+      },
+    ]);
+
+    return serviceSpace;
   }
 }

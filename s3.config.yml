@@ -1,0 +1,4 @@
+accessKeyId: test
+secretAccessKey: test
+region: us-west-2
+bucketName: test
